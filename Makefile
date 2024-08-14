@@ -3,6 +3,7 @@
 BLACK = black
 FLAKE8 = flake8
 MYPY = mypy
+PYTHON = python3
 
 all:
 
@@ -17,3 +18,7 @@ flake8:
 	
 mypy:
 	@$(MYPY) --strict .
+
+test:
+	@PYTHONPATH=src/pwncollege_cli $(PYTHON) -m unittest \
+		discover -s tests -v
