@@ -141,7 +141,13 @@ class PwnCollegeCLI:
             )
             return None
 
-        return self.session.get(f"{self.base_url}/logout")
+        # FIXME: Wrongly assumes that we are always able to logout...
+        # FIXME: `logged_in` instead of being an attribute it should do a
+        # FIXME: `GET /` and check the `userId` everytime. Like it does in
+        # FIXME: `login()`.
+        res = self.session.get(f"{self.base_url}/logout")
+        self.logged_in = False
+        return res
 
     def docker(
         self, challenge: str, dojo: str, module: str, practice: bool = False
