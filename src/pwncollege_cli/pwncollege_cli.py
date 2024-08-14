@@ -60,13 +60,19 @@ class PwnCollegeCLI:
         """
         logger.debug(f"Refreshing nonce via {self.base_url}")
         res = self.session.get(f"{self.base_url}")
-        nonce = re.search(
-            r"'csrfNonce': \"(?P<nonce>[^\"]+)\"", res.text
-        ).group("nonce")
+        m = re.search(r"'csrfNonce': \"(?P<nonce>[^\"]+)\"", res.text)
+        if not m:
+            # FIXME: We should trow an exception in that case because nonce()
+            # FIXME: is expected to never fail by its callers.
+            logger.error("Could not retrieve CSRF nonce")
+            return ""
+        nonce = m.group("nonce")
         logger.debug(f"Retrieved nonce {nonce}")
         return nonce
 
-    def login(self, username: str, password: str) -> requests.models.Response:
+    def login(
+        self, username: str, password: str
+    ) -> Optional[requests.models.Response]:
         """Login to pwn.college
 
         Given a username and password login to pwn.college.
@@ -92,9 +98,11 @@ class PwnCollegeCLI:
         )
 
         # If we are successfully logged in the userId should be non-0.
-        user_id = re.search(r"'userId': (?P<user_id>[0-9]+)", res.text).group(
-            "user_id"
-        )
+        m = re.search(r"'userId': (?P<user_id>[0-9]+)", res.text)
+        if not m:
+            logger.error("Could not retrieve userId")
+            return None
+        user_id = m.group("user_id")
         self.logged_in = user_id != 0
         if self.logged_in:
             logger.debug(
