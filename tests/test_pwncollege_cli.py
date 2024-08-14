@@ -5,7 +5,7 @@ import responses
 
 
 class TestPwnCollegeCLI(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         base_url = pwncollege_cli.PWNCOLLEGE_CLI_BASE_URL
 
         responses.get(
@@ -62,7 +62,7 @@ class TestPwnCollegeCLI(unittest.TestCase):
             """,
         )
 
-    def test_init(self):
+    def test_init(self) -> None:
         pcc = pwncollege_cli.PwnCollegeCLI()
         self.assertEqual(pcc.base_url, pwncollege_cli.PWNCOLLEGE_CLI_BASE_URL)
         self.assertFalse(pcc.logged_in)
@@ -71,18 +71,18 @@ class TestPwnCollegeCLI(unittest.TestCase):
             pwncollege_cli.PWNCOLLEGE_CLI_USER_AGENT,
         )
 
-    def test_init_custom(self):
+    def test_init_custom(self) -> None:
         base_url = "https://www.example.org"
         pcc = pwncollege_cli.PwnCollegeCLI(base_url=base_url)
         self.assertEqual(pcc.base_url, base_url)
 
     @responses.activate
-    def test_nonce(self):
+    def test_nonce(self) -> None:
         pcc = pwncollege_cli.PwnCollegeCLI()
         self.assertEqual(pcc.nonce(), "FAKE-CSRF-NONCE")
 
     @responses.activate
-    def test_login(self):
+    def test_login(self) -> None:
         username = "fake-username"
         password = "fake-password"
         pcc = pwncollege_cli.PwnCollegeCLI()
