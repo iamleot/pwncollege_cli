@@ -34,7 +34,7 @@ class TestPwnCollegeCLI(unittest.TestCase):
             content_type="text/html",
             status=200,
             headers={
-                "Set-Cookie": 'session="FAKE-SESSION-COOKIE"; '
+                "Set-Cookie": "session=FAKE-SESSION-COOKIE; "
                 + "HttpOnly; Path=/; SameSite=Lax"
             },
         )
@@ -60,6 +60,25 @@ class TestPwnCollegeCLI(unittest.TestCase):
                   }
                 </script>
             """,
+        )
+
+        responses.get(
+            f"{base_url}/logout",
+            content_type="text/html",
+            status=302,
+            body="""
+                <!doctype html>
+                <html lang=en>
+                <title>Redirecting...</title>
+                <h1>Redirecting...</h1>
+                <p>
+                ...
+            """,
+            headers={
+                "Set-Cookie": "session=; "
+                + "Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/",
+                "Location": "/",
+            },
         )
 
     def test_init(self) -> None:
@@ -89,6 +108,23 @@ class TestPwnCollegeCLI(unittest.TestCase):
         self.assertFalse(pcc.logged_in)
         pcc.login(username, password)
         self.assertTrue(pcc.logged_in)
+
+    @responses.activate
+    def test_cookies(self) -> None:
+        username = "fake-username"
+        password = "fake-password"
+        pcc = pwncollege_cli.PwnCollegeCLI()
+        pcc.login(username, password)
+        self.assertEqual(pcc.cookies(), "FAKE-SESSION-COOKIE")
+
+    @responses.activate
+    def test_logout(self) -> None:
+        username = "fake-username"
+        password = "fake-password"
+        pcc = pwncollege_cli.PwnCollegeCLI()
+        pcc.login(username, password)
+        pcc.logout()
+        self.assertFalse(pcc.logged_in)
 
 
 if __name__ == "__main__":
