@@ -20,5 +20,4 @@ mypy:
 	@$(MYPY) --strict .
 
 test:
-	@PYTHONPATH=src/pwncollege_cli $(PYTHON) -m unittest \
-		discover -s tests -v
+	$(PYTHON) -m unittest discover -s tests -v
