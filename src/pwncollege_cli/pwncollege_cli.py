@@ -433,9 +433,11 @@ def main() -> None:
         res = pcc.dojos()
         b = bs4.BeautifulSoup(res.content, "html.parser")
         for dojo in b.find_all("a", href=re.compile(r"/dojo/")):
+            dojo_name = dojo.h4.text
+            dojo_text = ", ".join(dojo.p.stripped_strings)
             logger.info(
-                f"{dojo['href'].removeprefix('/dojo/')}: {dojo.h4.text} "
-                + f"({dojo.p.text.strip()})"
+                f"{dojo['href'].removeprefix('/dojo/')}: {dojo_name} "
+                + f"({dojo_text})"
             )
         pcc.logout()
         exit(0)
@@ -447,12 +449,14 @@ def main() -> None:
         res = pcc.modules(dojo=args.dojo)
         b = bs4.BeautifulSoup(res.content, "html.parser")
         for module in b.find_all(
-            "a", href=re.compile(f"^/{args.dojo}/[a-z0-9-]+$")
+            "a", href=re.compile(f"^/{args.dojo}/[a-z0-9-]+/?$")
         ):
-            logger.info(
-                f"{module['href'].removeprefix(f'/{args.dojo}/')}: "
-                + f"{module.h4.text} ({module.p.text.strip()})"
+            module_name = (
+                module["href"].removeprefix(f"/{args.dojo}/").removesuffix("/")
             )
+            module_description = module.h4.text
+            module_text = ", ".join(module.p.stripped_strings)
+            logger.info(f"{module_name}: {module_description} ({module_text})")
         pcc.logout()
         exit(0)
 
