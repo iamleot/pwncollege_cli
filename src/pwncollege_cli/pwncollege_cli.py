@@ -23,6 +23,7 @@ please use it for the actual synopsis.
 
 
 from typing import Optional, Tuple
+import argparse
 import configparser
 import getpass
 import logging
@@ -296,14 +297,12 @@ def credentials() -> Tuple[str, str]:
     return username, password
 
 
-def main() -> None:
-    from sys import exit
-    import argparse
+def _argument_parser() -> argparse.ArgumentParser:
+    """
+    Construct the argument parser.
 
-    log = logging.getLogger(__name__)
-    log.setLevel(logging.INFO)
-    log.addHandler(logging.StreamHandler())
-
+    Returns an ArgumentParser.
+    """
     ap = argparse.ArgumentParser(
         prog="pwncollege-cli",
         description="Interact with pwn.college from a CLI",
@@ -385,8 +384,18 @@ def main() -> None:
     )
 
     sp.add_parser("cookies", help="show cookies")
+    return ap
 
-    args = ap.parse_args()
+
+def main() -> None:
+    from sys import exit
+
+    log = logging.getLogger(__name__)
+    log.setLevel(logging.INFO)
+    log.addHandler(logging.StreamHandler())
+
+    argument_parser = _argument_parser()
+    args = argument_parser.parse_args()
 
     if args.subcommand == "docker":
         pcc = PwnCollegeCLI()
