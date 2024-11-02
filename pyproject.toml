@@ -34,6 +34,16 @@ dependencies = [
     "requests"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "mypy",
+]
+test = [
+    "responses",
+]
+
 # TODO
 #[project.scripts]
 #pwncollege-cli = "pwncollege_cli:main"
