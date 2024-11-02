@@ -22,6 +22,7 @@ please use it for the actual synopsis.
 """
 
 
+from dataclasses import dataclass
 from typing import Optional, Tuple
 import argparse
 import configparser
@@ -38,6 +39,25 @@ PWNCOLLEGE_CLI_USER_AGENT = "pwncollege_cli/0.0.1"
 
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Dojo:
+    id: str
+    name: str
+
+
+@dataclass
+class Module:
+    id: str
+    name: str
+
+
+@dataclass
+class Challenge:
+    id: str
+    name: str
+    description: str
 
 
 class PwnCollegeCLI:
@@ -442,12 +462,11 @@ def main() -> None:
         res = pcc.dojos()
         b = bs4.BeautifulSoup(res.content, "html.parser")
         for dojo in b.find_all("a", href=re.compile(r"/dojo/")):
+            dojo_id = dojo['href'].removeprefix('/dojo/')
             dojo_name = dojo.h4.text
             dojo_text = ", ".join(dojo.p.stripped_strings)
-            logger.info(
-                f"{dojo['href'].removeprefix('/dojo/')}: {dojo_name} "
-                + f"({dojo_text})"
-            )
+            d = Dojo(id=dojo_id, name=dojo_name)
+            logger.info(f"{d.id}: {d.name} ({dojo_text})")
         pcc.logout()
         exit(0)
 
@@ -460,12 +479,13 @@ def main() -> None:
         for module in b.find_all(
             "a", href=re.compile(f"^/{args.dojo}/[a-z0-9-]+/?$")
         ):
-            module_name = (
+            module_id = (
                 module["href"].removeprefix(f"/{args.dojo}/").removesuffix("/")
             )
-            module_description = module.h4.text
+            module_name = module.h4.text
             module_text = ", ".join(module.p.stripped_strings)
-            logger.info(f"{module_name}: {module_description} ({module_text})")
+            m = Module(id=module_id, name=module_name)
+            logger.info(f"{m.id}: {m.name} ({module_text})")
         pcc.logout()
         exit(0)
 
@@ -476,11 +496,13 @@ def main() -> None:
         res = pcc.challenges(dojo=args.dojo, module=args.module)
         b = bs4.BeautifulSoup(res.content, "html.parser")
         for challenge in b.find_all("div", id=re.compile("challenges-body")):
-            logger.info(
-                f"{challenge.find('input', id='challenge-id')['value']}: "
-                + f"{challenge.find('input', id='challenge')['value']} - "
-                + f"{challenge.find('div', class_='embed-responsive').text.strip()}"  # noqa: E501
-            )
+            challenge_id = challenge.find('input', id='challenge-id')['value']
+            challenge_name = challenge.find('input', id='challenge')['value']
+            challenge_description = \
+                challenge.find('div', class_='embed-responsive').text.strip()
+            c = Challenge(id=challenge_id, name=challenge_name,
+                          description=challenge_description)
+            logger.info(f"{c.id}: {c.name} - {c.description}")
         pcc.logout()
         exit(0)
 
