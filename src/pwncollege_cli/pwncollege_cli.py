@@ -310,7 +310,7 @@ def credentials() -> Tuple[str, str]:
             )
         if cp["pwn.college"].get("password"):
             password = cp["pwn.college"]["password"]
-    except:
+    except Exception:
         username = input("username or email: ")
         password = getpass.getpass("password: ")
 
