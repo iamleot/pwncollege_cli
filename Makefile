@@ -16,6 +16,9 @@ flake8:
 	@$(FLAKE8) --select=E9,F63,F7,F82 --show-source .
 	@$(FLAKE8) --exit-zero --max-complexity=10 .
 	
+mypy-install-types:
+	@$(MYPY) --non-interactive --install-types .
+
 mypy:
 	@$(MYPY) --strict --exclude tests .
 
