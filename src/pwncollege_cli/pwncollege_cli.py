@@ -45,12 +45,18 @@ logger = logging.getLogger(__name__)
 class Dojo:
     id: str
     name: str
+    hacking: int
+    modules: int
+    challenges: int
 
 
 @dataclass
 class Module:
     id: str
     name: str
+    hacking: int
+    solved_challenges: int
+    total_challenges: int
 
 
 @dataclass
@@ -252,29 +258,121 @@ class PwnCollegeCLI:
 
         return res
 
-    def dojos(self) -> requests.models.Response:
+    @staticmethod
+    def _parse_dojos(response: requests.models.Response) -> list[Dojo]:
+        """Parse response of dojos and return list of Dojo.
+
+        Returns a list of Dojo.
+        """
+        dojos = []
+        b = bs4.BeautifulSoup(response.content, "html.parser")
+        for e in b.find_all("a", href=re.compile(r"/dojo/")):
+            dojo_id = e["href"].removeprefix("/dojo/")
+            dojo_name = e.find(class_="card-title").text
+
+            hacking = 0  # noone could be hacking on dojo
+            for s in e.find(class_="card-text").stripped_strings:
+                if "Hacking" in s:
+                    hacking = int(s.split()[0])
+                    continue
+                if "Modules" in s:
+                    modules = int(s.split()[0])
+                    continue
+                if "Challenges" in s:
+                    challenges = int(s.split()[0])
+                    continue
+
+            dojos.append(
+                Dojo(
+                    id=dojo_id,
+                    name=dojo_name,
+                    hacking=hacking,
+                    modules=modules,
+                    challenges=challenges,
+                )
+            )
+        return dojos
+
+    def dojos(self) -> list[Dojo]:
         """Show all dojos.
 
         Returns raw HTTP Response.
         """
         logger.debug("Requesting dojos")
-
         res = self.session.get(f"{self.base_url}/dojos")
+        return self._parse_dojos(res)
 
-        return res
+    @staticmethod
+    def _parse_modules(
+        response: requests.models.Response, dojo: str
+    ) -> list[Module]:
+        """Parse response of modules and return list of Module.
 
-    def modules(self, dojo: str) -> requests.models.Response:
+        Returns a list of Module.
+        """
+        modules = []
+        b = bs4.BeautifulSoup(response.content, "html.parser")
+        for e in b.find_all("a", href=re.compile(f"^/{dojo}/[a-z0-9-]+/?$")):
+            module_id = e["href"].removeprefix(f"/{dojo}/").removesuffix("/")
+            module_name = e.find(class_="card-title").text
+
+            hacking = 0  # noone could be hacking on module
+            for s in e.find(class_="card-text").stripped_strings:
+                if "Hacking" in s:
+                    hacking = int(s.split()[0])
+                    continue
+                if " / " in s:
+                    solved_challenges, total_challenges = (
+                        int(n) for n in s.split(" / ")
+                    )
+                    continue
+
+            modules.append(
+                Module(
+                    id=module_id,
+                    name=module_name,
+                    hacking=hacking,
+                    solved_challenges=solved_challenges,
+                    total_challenges=total_challenges,
+                )
+            )
+        return modules
+
+    def modules(self, dojo: str) -> list[Module]:
         """Show all modules in a dojo.
 
         Returns raw HTTP Response.
         """
         logger.debug(f"Requesting modules in dojo {dojo}")
-
         res = self.session.get(f"{self.base_url}/{dojo}/")
+        return self._parse_modules(res, dojo)
 
-        return res
+    @staticmethod
+    def _parse_challenges(
+        response: requests.models.Response,
+    ) -> list[Challenge]:
+        """Parse response of challenges and return list of Challenge.
 
-    def challenges(self, dojo: str, module: str) -> requests.models.Response:
+        Returns a list of Challenge.
+        """
+        challenges = []
+        b = bs4.BeautifulSoup(response.content, "html.parser")
+        for e in b.find_all("div", id=re.compile("challenges-body")):
+            challenge_id = e.find("input", id="challenge-id")["value"]
+            challenge_name = e.find("input", id="challenge")["value"]
+            challenge_description = e.find(
+                "div", class_="embed-responsive"
+            ).text.strip()
+            challenges.append(
+                Challenge(
+                    id=challenge_id,
+                    name=challenge_name,
+                    description=challenge_description,
+                )
+            )
+        return challenges
+
+    def challenges(self, dojo: str, module: str) -> list[Challenge]:
         """Show all challenges in a dojo module.
 
         Returns raw HTTP Response.
@@ -282,10 +380,8 @@ class PwnCollegeCLI:
         logger.debug(
             f"Requesting challenges in dojo {dojo} for module {module}"
         )
-
         res = self.session.get(f"{self.base_url}/{dojo}/{module}")
-
-        return res
+        return self._parse_challenges(res)
 
 
 def credentials() -> Tuple[str, str]:
@@ -442,44 +538,31 @@ def main() -> None:
             logger.error(f"Could not get status: {j['error']}")
         pcc.logout()
     elif args.subcommand == "dojos":
-        res = pcc.dojos()
-        b = bs4.BeautifulSoup(res.content, "html.parser")
-        for dojo in b.find_all("a", href=re.compile(r"/dojo/")):
-            dojo_id = dojo["href"].removeprefix("/dojo/")
-            dojo_name = dojo.h4.text
-            dojo_text = ", ".join(dojo.p.stripped_strings)
-            d = Dojo(id=dojo_id, name=dojo_name)
-            logger.info(f"{d.id}: {d.name} ({dojo_text})")
+        for dojo in pcc.dojos():
+            logger.info(
+                f"{dojo.id}: {dojo.name} "
+                + "("
+                + f"{dojo.hacking} Hacking, "
+                + f"{dojo.modules} Modules, "
+                + f"{dojo.challenges} Challenges)"
+            )
         pcc.logout()
     elif args.subcommand == "modules":
-        res = pcc.modules(dojo=args.dojo)
-        b = bs4.BeautifulSoup(res.content, "html.parser")
-        for module in b.find_all(
-            "a", href=re.compile(f"^/{args.dojo}/[a-z0-9-]+/?$")
-        ):
-            module_id = (
-                module["href"].removeprefix(f"/{args.dojo}/").removesuffix("/")
+        for module in pcc.modules(dojo=args.dojo):
+            logger.info(
+                f"{module.id}: {module.name} "
+                + "("
+                + f"{module.hacking} Hacking, "
+                + f"{module.solved_challenges} / "
+                + f"{module.total_challenges} Challenges)"
             )
-            module_name = module.h4.text
-            module_text = ", ".join(module.p.stripped_strings)
-            m = Module(id=module_id, name=module_name)
-            logger.info(f"{m.id}: {m.name} ({module_text})")
         pcc.logout()
     elif args.subcommand == "challenges":
-        res = pcc.challenges(dojo=args.dojo, module=args.module)
-        b = bs4.BeautifulSoup(res.content, "html.parser")
-        for challenge in b.find_all("div", id=re.compile("challenges-body")):
-            challenge_id = challenge.find("input", id="challenge-id")["value"]
-            challenge_name = challenge.find("input", id="challenge")["value"]
-            challenge_description = challenge.find(
-                "div", class_="embed-responsive"
-            ).text.strip()
-            c = Challenge(
-                id=challenge_id,
-                name=challenge_name,
-                description=challenge_description,
+        for challenge in pcc.challenges(dojo=args.dojo, module=args.module):
+            logger.info(
+                f"{challenge.id}: {challenge.name} - "
+                + f"{challenge.description}"
             )
-            logger.info(f"{c.id}: {c.name} - {c.description}")
         pcc.logout()
     elif args.subcommand == "cookies":
         cookies = pcc.cookies()
