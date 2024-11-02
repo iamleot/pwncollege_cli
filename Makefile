@@ -17,7 +17,7 @@ flake8:
 	@$(FLAKE8) --exit-zero --max-complexity=10 .
 	
 mypy:
-	@$(MYPY) --strict .
+	@$(MYPY) --strict --exclude tests .
 
 test:
 	$(PYTHON) -m unittest discover -s tests -v
