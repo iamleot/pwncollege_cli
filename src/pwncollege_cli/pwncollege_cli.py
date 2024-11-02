@@ -514,10 +514,10 @@ def main() -> None:
         pcc = PwnCollegeCLI()
         username, password = credentials()
         pcc.login(username, password)
-        c = pcc.cookies()
-        if not c:
+        cookies = pcc.cookies()
+        if not cookies:
             logger.error("Could not get session cookies.")
-        logger.info(f"Session cookies: {c}")
+        logger.info(f"Session cookies: {cookies}")
         exit(0)
 
 
