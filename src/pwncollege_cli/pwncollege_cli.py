@@ -408,8 +408,6 @@ def _argument_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    from sys import exit
-
     log = logging.getLogger(__name__)
     log.setLevel(logging.INFO)
     log.addHandler(logging.StreamHandler())
@@ -417,10 +415,10 @@ def main() -> None:
     argument_parser = _argument_parser()
     args = argument_parser.parse_args()
 
+    pcc = PwnCollegeCLI()
+    username, password = credentials()
+    pcc.login(username, password)
     if args.subcommand == "docker":
-        pcc = PwnCollegeCLI()
-        username, password = credentials()
-        pcc.login(username, password)
         pcc.docker(
             challenge=args.challenge,
             dojo=args.dojo,
@@ -428,20 +426,10 @@ def main() -> None:
             practice=args.practice,
         )
         pcc.logout()
-        exit(0)
-
-    if args.subcommand == "attempt":
-        pcc = PwnCollegeCLI()
-        username, password = credentials()
-        pcc.login(username, password)
+    elif args.subcommand == "attempt":
         pcc.attempt(challenge_id=args.challenge_id, flag=args.flag)
         pcc.logout()
-        exit(0)
-
-    if args.subcommand == "status":
-        pcc = PwnCollegeCLI()
-        username, password = credentials()
-        pcc.login(username, password)
+    elif args.subcommand == "status":
         res = pcc.status()
         j = res.json()
         if j["success"]:
@@ -453,12 +441,7 @@ def main() -> None:
         else:
             logger.error(f"Could not get status: {j['error']}")
         pcc.logout()
-        exit(0)
-
-    if args.subcommand == "dojos":
-        pcc = PwnCollegeCLI()
-        username, password = credentials()
-        pcc.login(username, password)
+    elif args.subcommand == "dojos":
         res = pcc.dojos()
         b = bs4.BeautifulSoup(res.content, "html.parser")
         for dojo in b.find_all("a", href=re.compile(r"/dojo/")):
@@ -468,12 +451,7 @@ def main() -> None:
             d = Dojo(id=dojo_id, name=dojo_name)
             logger.info(f"{d.id}: {d.name} ({dojo_text})")
         pcc.logout()
-        exit(0)
-
-    if args.subcommand == "modules":
-        pcc = PwnCollegeCLI()
-        username, password = credentials()
-        pcc.login(username, password)
+    elif args.subcommand == "modules":
         res = pcc.modules(dojo=args.dojo)
         b = bs4.BeautifulSoup(res.content, "html.parser")
         for module in b.find_all(
@@ -487,12 +465,7 @@ def main() -> None:
             m = Module(id=module_id, name=module_name)
             logger.info(f"{m.id}: {m.name} ({module_text})")
         pcc.logout()
-        exit(0)
-
-    if args.subcommand == "challenges":
-        pcc = PwnCollegeCLI()
-        username, password = credentials()
-        pcc.login(username, password)
+    elif args.subcommand == "challenges":
         res = pcc.challenges(dojo=args.dojo, module=args.module)
         b = bs4.BeautifulSoup(res.content, "html.parser")
         for challenge in b.find_all("div", id=re.compile("challenges-body")):
@@ -508,17 +481,11 @@ def main() -> None:
             )
             logger.info(f"{c.id}: {c.name} - {c.description}")
         pcc.logout()
-        exit(0)
-
-    if args.subcommand == "cookies":
-        pcc = PwnCollegeCLI()
-        username, password = credentials()
-        pcc.login(username, password)
+    elif args.subcommand == "cookies":
         cookies = pcc.cookies()
         if not cookies:
             logger.error("Could not get session cookies.")
         logger.info(f"Session cookies: {cookies}")
-        exit(0)
 
 
 if __name__ == "__main__":
