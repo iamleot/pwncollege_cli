@@ -462,7 +462,7 @@ def main() -> None:
         res = pcc.dojos()
         b = bs4.BeautifulSoup(res.content, "html.parser")
         for dojo in b.find_all("a", href=re.compile(r"/dojo/")):
-            dojo_id = dojo['href'].removeprefix('/dojo/')
+            dojo_id = dojo["href"].removeprefix("/dojo/")
             dojo_name = dojo.h4.text
             dojo_text = ", ".join(dojo.p.stripped_strings)
             d = Dojo(id=dojo_id, name=dojo_name)
@@ -496,12 +496,16 @@ def main() -> None:
         res = pcc.challenges(dojo=args.dojo, module=args.module)
         b = bs4.BeautifulSoup(res.content, "html.parser")
         for challenge in b.find_all("div", id=re.compile("challenges-body")):
-            challenge_id = challenge.find('input', id='challenge-id')['value']
-            challenge_name = challenge.find('input', id='challenge')['value']
-            challenge_description = \
-                challenge.find('div', class_='embed-responsive').text.strip()
-            c = Challenge(id=challenge_id, name=challenge_name,
-                          description=challenge_description)
+            challenge_id = challenge.find("input", id="challenge-id")["value"]
+            challenge_name = challenge.find("input", id="challenge")["value"]
+            challenge_description = challenge.find(
+                "div", class_="embed-responsive"
+            ).text.strip()
+            c = Challenge(
+                id=challenge_id,
+                name=challenge_name,
+                description=challenge_description,
+            )
             logger.info(f"{c.id}: {c.name} - {c.description}")
         pcc.logout()
         exit(0)
