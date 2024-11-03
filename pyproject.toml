@@ -41,6 +41,7 @@ dev = [
     "mypy",
 ]
 test = [
+    "pytest",
     "responses",
 ]
 
@@ -56,3 +57,6 @@ Issues = "https://github.com/iamleot/pwncollege_cli/issues"
 [tool.black]
 # honor PEP 8
 line-length = 79
+
+[tool.pytest.ini_options]
+pythonpath = "src"

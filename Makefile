@@ -3,6 +3,7 @@
 BLACK = black
 FLAKE8 = flake8
 MYPY = mypy
+PYTEST = pytest
 PYTHON = python3
 
 all:
@@ -23,4 +24,4 @@ mypy:
 	@$(MYPY) --strict --exclude tests .
 
 test:
-	$(PYTHON) -m unittest discover -s tests -v
+	$(PYTEST) -v
