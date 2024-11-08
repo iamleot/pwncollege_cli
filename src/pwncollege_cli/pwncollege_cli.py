@@ -63,6 +63,7 @@ class Module:
 class Challenge:
     id: str
     name: str
+    title: str
     description: str
 
 
@@ -357,16 +358,23 @@ class PwnCollegeCLI:
         """
         challenges = []
         b = bs4.BeautifulSoup(response.content, "html.parser")
-        for e in b.find_all("div", id=re.compile("challenges-body")):
-            challenge_id = e.find("input", id="challenge-id")["value"]
-            challenge_name = e.find("input", id="challenge")["value"]
-            challenge_description = e.find(
+        for header, body in zip(
+            b.find_all("div", id=re.compile("challenges-header")),
+            b.find_all("div", id=re.compile("challenges-body")),
+        ):
+            challenge_id = body.find("input", id="challenge-id")["value"]
+            challenge_name = body.find("input", id="challenge")["value"]
+            challenge_title = header.find(
+                "h4", class_="challenge-name"
+            ).text.strip()
+            challenge_description = body.find(
                 "div", class_="embed-responsive"
             ).text.strip()
             challenges.append(
                 Challenge(
                     id=challenge_id,
                     name=challenge_name,
+                    title=challenge_title,
                     description=challenge_description,
                 )
             )
@@ -560,7 +568,7 @@ def main() -> None:
     elif args.subcommand == "challenges":
         for challenge in pcc.challenges(dojo=args.dojo, module=args.module):
             logger.info(
-                f"{challenge.id}: {challenge.name} - "
+                f"{challenge.id} - {challenge.name}: {challenge.title}\n"
                 + f"{challenge.description}"
             )
         pcc.logout()
