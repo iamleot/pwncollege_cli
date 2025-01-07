@@ -5,6 +5,8 @@ name: Continuous Integration
     branches:
       - main
   pull_request:
+  schedule:
+    - cron: '12 3 * * 4'
 
 jobs:
   ci:
