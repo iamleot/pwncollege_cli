@@ -268,11 +268,22 @@ class PwnCollegeCLI:
         dojos = []
         b = bs4.BeautifulSoup(response.content, "html.parser")
         for e in b.find_all("a", href=re.compile(r"/dojo/")):
+            assert isinstance(e, bs4.element.Tag)
+            assert isinstance(e["href"], str)
+
             dojo_id = e["href"].removeprefix("/dojo/")
-            dojo_name = e.find(class_="card-title").text
+
+            card_title = e.find(class_="card-title")
+            if not card_title:
+                break
+            dojo_name = card_title.text
+
+            card_text = e.find(class_="card-text")
+            if not card_text:
+                break
 
             hacking = 0  # noone could be hacking on dojo
-            for s in e.find(class_="card-text").stripped_strings:
+            for s in card_text.stripped_strings:
                 if "Hacking" in s:
                     hacking = int(s.split()[0])
                     continue
@@ -314,11 +325,22 @@ class PwnCollegeCLI:
         modules = []
         b = bs4.BeautifulSoup(response.content, "html.parser")
         for e in b.find_all("a", href=re.compile(f"^/{dojo}/[a-z0-9-]+/?$")):
+            assert isinstance(e, bs4.element.Tag)
+            assert isinstance(e["href"], str)
+
             module_id = e["href"].removeprefix(f"/{dojo}/").removesuffix("/")
-            module_name = e.find(class_="card-title").text
+
+            card_title = e.find(class_="card-title")
+            if not card_title:
+                break
+            module_name = card_title.text
+
+            card_text = e.find(class_="card-text")
+            if not card_text:
+                break
 
             hacking = 0  # noone could be hacking on module
-            for s in e.find(class_="card-text").stripped_strings:
+            for s in card_text.stripped_strings:
                 if "Hacking" in s:
                     hacking = int(s.split()[0])
                     continue
@@ -362,14 +384,27 @@ class PwnCollegeCLI:
             b.find_all("div", id=re.compile("challenges-header")),
             b.find_all("div", id=re.compile("challenges-body")),
         ):
-            challenge_id = body.find("input", id="challenge-id")["value"]
-            challenge_name = body.find("input", id="challenge")["value"]
-            challenge_title = header.find(
-                "h4", class_="challenge-name"
-            ).text.strip()
-            challenge_description = body.find(
-                "div", class_="embed-responsive"
-            ).text.strip()
+            assert isinstance(body, bs4.element.Tag)
+            assert isinstance(header, bs4.element.Tag)
+
+            t = body.find("input", id="challenge-id")
+            assert isinstance(t, bs4.element.Tag)
+            challenge_id = t["value"]
+            assert isinstance(challenge_id, str)
+
+            t = body.find("input", id="challenge")
+            assert isinstance(t, bs4.element.Tag)
+            challenge_name = t["value"]
+            assert isinstance(challenge_name, str)
+
+            t = header.find("h4", class_="challenge-name")
+            assert isinstance(t, bs4.element.Tag)
+            challenge_title = t.text.strip()
+
+            t = body.find("div", class_="embed-responsive")
+            assert isinstance(t, bs4.element.Tag)
+            challenge_description = t.text.strip()
+
             challenges.append(
                 Challenge(
                     id=challenge_id,
