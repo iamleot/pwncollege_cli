@@ -381,7 +381,7 @@ class PwnCollegeCLI:
         challenges = []
         b = bs4.BeautifulSoup(response.content, "html.parser")
         for header, body in zip(
-            b.find_all("div", id=re.compile("challenges-header")),
+            b.find_all("h4", class_="challenge-name"),
             b.find_all("div", id=re.compile("challenges-body")),
         ):
             assert isinstance(body, bs4.element.Tag)
@@ -397,9 +397,7 @@ class PwnCollegeCLI:
             challenge_name = t["value"]
             assert isinstance(challenge_name, str)
 
-            t = header.find("h4", class_="challenge-name")
-            assert isinstance(t, bs4.element.Tag)
-            challenge_title = t.text.strip()
+            challenge_title = header.text.strip()
 
             t = body.find("div", class_="embed-responsive")
             assert isinstance(t, bs4.element.Tag)
