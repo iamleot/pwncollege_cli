@@ -1,4 +1,5 @@
 name: Continuous Integration
+permissions: {}
 
 'on':
   push:
