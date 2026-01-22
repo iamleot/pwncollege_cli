@@ -21,7 +21,6 @@ Both pwncollege-cli and each single command has a `-h` option for help,
 please use it for the actual synopsis.
 """
 
-
 from dataclasses import dataclass
 from typing import Optional, Tuple
 import argparse
